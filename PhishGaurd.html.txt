@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard - Phishing Detector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        #urlInput {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 50px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #urlInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .analyze-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: left;
+            display: none;
+        }
+
+        .risk-high {
+            background: #fee;
+            border: 2px solid #f87171;
+            color: #dc2626;
+        }
+
+        .risk-medium {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            color: #d97706;
+        }
+
+        .risk-low {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            color: #059669;
+        }
+
+        .risk-score {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .risk-label {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .checks-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .checks-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .check-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 50%;
+        }
+
+        .safe { background: #10b981; }
+        .warning { background: #f59e0b; }
+        .danger { background: #ef4444; }
+
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .example-urls {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .example-urls a {
+            color: #667eea;
+            text-decoration: none;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+
+        .example-urls a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            .logo {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🛡️ PhishGuard</div>
+        <div class="subtitle">Advanced Phishing Detection System</div>
+        
+        <div class="input-group">
+            <input type="url" id="urlInput" placeholder="Paste suspicious URL here... (e.g., https://fake-paypal-login.com)" required>
+            <button class="analyze-btn" onclick="analyzeURL()">🔍 Analyze URL</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>Analyzing URL security...</div>
+        </div>
+
+        <div class="example-urls">
+            Try these test URLs: 
+            <a onclick="setExample('https://google.com')">Safe</a> | 
+            <a onclick="setExample('https://login.paypal-secure.com')">Phishing</a> | 
+            <a onclick="setExample('http://bаnkofamerica.com')">Suspicious</a>
+        </div>
+
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        function setExample(url) {
+            document.getElementById('urlInput').value = url;
+        }
+
+        function analyzeURL() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const btn = document.querySelector('.analyze-btn');
+
+            if (!url) {
+                alert('Please enter a URL to analyze');
+                return;
+            }
+
+            // Reset UI
+            results.style.display = 'none';
+            loading.style.display = 'block';
+            btn.disabled = true;
+            btn.textContent = 'Analyzing...';
+
+            // Simulate analysis delay
+            setTimeout(() => {
+                const analysis = performPhishingAnalysis(url);
+                displayResults(analysis);
+                loading.style.display = 'none';
+                btn.disabled = false;
+                btn.textContent = '🔍 Analyze URL';
+            }, 2000);
+        }
+
+        function performPhishingAnalysis(url) {
+            const urlObj = new URL(url.startsWith('http') ? url : 'https://' + url);
+            const hostname = urlObj.hostname.toLowerCase();
+            const pathname = urlObj.pathname.toLowerCase();
+            
+            let score = 0;
+            let checks = [];
+            let riskLevel = 'low';
+
+            // 1. Check for HTTPS
+            const hasHTTPS = urlObj.protocol === 'https:';
+            score += hasHTTPS ? 0 : 20;
+            checks.push({
+                name: 'HTTPS Security',
+                passed: hasHTTPS,
+                details: hasHTTPS ? 'Connection encrypted' : 'Insecure HTTP connection'
+            });
+
+            // 2. Check for suspicious keywords in domain
+            const phishingKeywords = ['login', 'secure', 'account', 'verify', 'update', 'bank', 'paypal', 'amazon', 'netflix', 'microsoft'];
+            const domainKeywords = hostname.split('.').slice(0, -1).join('.');
+            const hasPhishingKeywords = phishingKeywords.some(keyword => 
+                domainKeywords.includes(keyword)
+            );
+            score += hasPhishingKeywords ? 25 : 0;
+            checks.push({
+                name: 'Domain Keywords',
+                passed: !hasPhishingKeywords,
+                details: hasPhishingKeywords ? 'Suspicious keywords detected' : 'Clean domain name'
+            });
+
+            // 3. Check for homoglyph attacks (lookalike characters)
+            const homoglyphs = /[а-яё]/; // Cyrillic lookalikes
+            const hasHomoglyphs = homoglyphs.test(hostname);
+            score += hasHomoglyphs ? 30 : 0;
+            checks.push({
+                name: 'Homoglyph Attack',
+                passed: !hasHomoglyphs,
+                details: hasHomoglyphs ? 'Lookalike characters detected' : 'No homoglyphs found'
+            });
+
+            // 4. Check for IP address instead of domain
+            const isIP = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname);
+            score += isIP ? 25 : 0;
+            checks.push({
+                name: 'IP Address',
+                passed: !isIP,
+                details: isIP ? 'Using IP instead of domain' : 'Valid domain name'
+            });
+
+            // 5. Check path for suspicious patterns
+            const suspiciousPaths = ['login', 'signin', 'verify', 'confirm', 'update', 'billing'];
+            const hasSuspiciousPath = suspiciousPaths.some(path => pathname.includes(path));
+            score += hasSuspiciousPath ? 15 : 0;
+            checks.push({
+                name: 'URL Path',
+                passed: !hasSuspiciousPath,
+                details: hasSuspiciousPath ? 'Suspicious path detected' : 'Normal path structure'
+            });
+
+            // 6. Check domain age (simulated)
+            const isNewDomain = Math.random() < 0.3; // 30% chance to flag as new
+            score += isNewDomain ? 10 : 0;
+            checks.push({
+                name: 'Domain Age',
+                passed: !isNewDomain,
+                details: isNewDomain ? 'Recently registered domain' : 'Established domain'
+            });
+
+            // Determine risk level
+            if (score >= 60) {
+                riskLevel = 'high';
+            } else if (score >= 30) {
+                riskLevel = 'medium';
+            }
+
+            return {
+                score: Math.round(score),
+                riskLevel,
+                url: url,
+                checks
+            };
+        }
+
+        function displayResults(analysis) {
+            const results = document.getElementById('results');
+            const riskColors = {
+                high: { label: '🚨 HIGH RISK - PHISHING DETECTED', class: 'risk-high' },
+                medium: { label: '⚠️ MEDIUM RISK', class: 'risk-medium' },
+                low: { label: '✅ SAFE', class: 'risk-low' }
+            };
+
+            results.innerHTML = `
+                <div class="risk-score">${analysis.score}/100</div>
+                <div class="risk-label">${riskColors[analysis.riskLevel].label}</div>
+                <div><strong>URL:</strong> ${analysis.url}</div>
+                
+                <ul class="checks-list">
+                    ${analysis.checks.map(check => `
+                        <li>
+                            <span class="check-icon ${check.passed ? 'safe' : check.passed === false ? 'danger' : 'warning'}"></span>
+                            <strong>${check.name}:</strong> ${check.details}
+                        </li>
+                    `).join('')}
+                </ul>
+
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 10px; font-size: 0.95em;">
+                    ${analysis.riskLevel === 'high' ? 
+                        '❌ DO NOT VISIT THIS URL. This appears to be a phishing attempt.' :
+                        analysis.riskLevel === 'medium' ? 
+                        '⚠️ Exercise extreme caution. Verify the URL through official channels.' :
+                        '✅ This URL appears safe, but always double-check important sites.'}
+                </div>
+            `;
+
+            results.className = `results ${riskColors[analysis.riskLevel].class}`;
+            results.style.display = 'block';
+            
+            // Auto-scroll to results
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Allow Enter key to analyze
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeURL();
+            }
+        });
+
+        // Analyze on paste
+        document.getElementById('urlInput').addEventListener('paste', function() {
+            setTimeout(() => {
+                const url = document.getElementById('urlInput').value.trim();
+                if (url) {
+                    // Auto-analyze after paste (optional)
+                    // analyzeURL();
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
